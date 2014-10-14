@@ -1,39 +1,37 @@
-OS = LINUX
-#OS = MACOSX
-#OS = WINDOWS
+OS ?= LINUX
+#OS ?= MACOSX
+#OS ?= WINDOWS
 
 PROG = firmata_test
 
 ifeq ($(OS), LINUX)
-TARGET = $(PROG)
-FINAL_TARGET = $(TARGET)
-CXX = g++
-STRIP = strip
-WXCONFIG = ~/wxwidgets/2.8.10.gtk2.teensy/bin/wx-config
-CPPFLAGS = -O2 -Wall -Wno-strict-aliasing `$(WXCONFIG) --cppflags` -D$(OS)
-LIBS = `$(WXCONFIG) --libs`
+WXCONFIG ?= ~/wxwidgets/2.8.10.gtk2.teensy/bin/wx-config
 else ifeq ($(OS), MACOSX)
-TARGET = $(PROG)
 FINAL_TARGET = $(PROG).dmg
 SDK = /Developer/SDKs/MacOSX10.5.sdk
 CXX = g++
 STRIP = strip
-WXCONFIG = ~/wxwidgets/2.8.10.mac.teensy/bin/wx-config
-CPPFLAGS =  -O2 -Wall -Wno-strict-aliasing -isysroot $(SDK) `$(WXCONFIG) --cppflags` -D$(OS) -arch ppc -arch i386
-LIBS = -Xlinker -syslibroot -Xlinker $(SDK) `$(WXCONFIG) --libs`
+WXCONFIG ?= ~/wxwidgets/2.8.10.mac.teensy/bin/wx-config
+PLATFORM_CPPFLAGS = -isysroot $(SDK) -arch ppc -arch i386
+PLATFORM_LIBS = -Xlinker -syslibroot -Xlinker $(SDK)
 else ifeq ($(OS), WINDOWS)
 TARGET = $(PROG).exe
-FINAL_TARGET = $(TARGET)
-CXX = i586-mingw32msvc-g++
-STRIP = i586-mingw32msvc-strip
-WINDRES = i586-mingw32msvc-windres
+CROSS ?= i586-mingw32msvc-
+WINDRES = $(CROSS)windres
 KEY_SPC = ~/bin/cert/mykey.spc
 KEY_PVK = ~/bin/cert/mykey.pvk
 KEY_TS = http://timestamp.comodoca.com/authenticode
-WXCONFIG = ~/wxwidgets/2.8.10.mingw.teensy/bin/wx-config
-CPPFLAGS =  -O2 -Wall -Wno-strict-aliasing `$(WXCONFIG) --cppflags` -D$(OS)
-LIBS = `$(WXCONFIG) --libs`
+WXCONFIG ?= ~/wxwidgets/2.8.10.mingw.teensy/bin/wx-config
 endif
+
+WXCONFIG := $(shell if [ -x $(WXCONFIG) ]; then echo $(WXCONFIG); else echo `which wx-config`; fi)
+
+TARGET ?= $(PROG)
+FINAL_TARGET ?= $(TARGET)
+CXX ?= $(CROSS)g++
+STRIP ?= $(CROSS)strip
+LIBS = $(PLATFORM_LIBS) `$(WXCONFIG) --libs`
+CPPFLAGS = $(PLATFORM_CPPFLAGS) -O2 -Wall -Wno-strict-aliasing `$(WXCONFIG) --cppflags` -D$(OS)
 
 MAKEFLAGS = --jobs=4
 
@@ -42,7 +40,7 @@ OBJS = firmata_test.o serial.o
 all: $(FINAL_TARGET)
 
 $(PROG): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LIBS)
+	$(CXX) $(LDFLAGS) $(OBJS) -o $@ $(LIBS)
 
 $(PROG).exe: $(PROG)
 	cp $(PROG) $@ 
