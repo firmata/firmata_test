@@ -61,6 +61,8 @@ wxMenu *port_menu;
 #define ANALOG_MAPPING_RESPONSE 0x6A
 #define REPORT_FIRMWARE         0x79 // report name and version of the firmware
 
+const wxString S_HIGH = _("High");
+const wxString S_LOW = _("Low");
 
 BEGIN_EVENT_TABLE(MyFrame,wxFrame)
 	EVT_MENU(wxID_ABOUT, MyFrame::OnAbout)
@@ -86,10 +88,10 @@ MyFrame::MyFrame( wxWindow *parent, wxWindowID id, const wxString &title,
 	port.Set_baud(57600);
 	wxMenuBar *menubar = new wxMenuBar;
 	wxMenu *menu = new wxMenu;
-	menu->Append( wxID_EXIT, "Quit", "");
-	menubar->Append(menu, "File");
+	menu->Append( wxID_EXIT, _("Quit"), wxEmptyString);
+	menubar->Append(menu, _("File"));
 	menu = new wxMenu;
-	menubar->Append(menu, "Port");
+	menubar->Append(menu, _("Port"));
 	SetMenuBar(menubar);
 	port_menu = menu;
 	CreateStatusBar(1);
@@ -122,7 +124,7 @@ void MyFrame::init_data(void)
 		pin_info[i].value = 0;
 	}
 	tx_count = rx_count = 0;
-	firmata_name = "";
+	firmata_name = wxEmptyString;
 	UpdateStatus();
 	new_size();
 }
@@ -145,7 +147,7 @@ void MyFrame::add_item_to_grid(int row, int col, wxWindow *item)
 		while (num_row < row + 1) {
 			printf("  add %d static text\n", num_col);
 			for (int i=0; i<num_col; i++) {
-				grid->Add(new wxStaticText(scroll, -1, ""));
+				grid->Add(new wxStaticText(scroll, -1, wxEmptyString));
 			}
 			num_row++;
 		}
@@ -172,24 +174,24 @@ void MyFrame::add_item_to_grid(int row, int col, wxWindow *item)
 void MyFrame::add_pin(int pin)
 {
 	wxString *str = new wxString();
-	str->Printf("Pin %d", pin);
+	str->Printf(_("Pin %d"), pin);
 	wxStaticText *pin_name = new wxStaticText(scroll, -1, *str);
 	add_item_to_grid(pin, 0, pin_name);
 
 	wxArrayString list;
-	if (pin_info[pin].supported_modes & (1<<MODE_INPUT)) list.Add("Input");
-	if (pin_info[pin].supported_modes & (1<<MODE_OUTPUT)) list.Add("Output");
-	if (pin_info[pin].supported_modes & (1<<MODE_ANALOG)) list.Add("Analog");
-	if (pin_info[pin].supported_modes & (1<<MODE_PWM)) list.Add("PWM");
-	if (pin_info[pin].supported_modes & (1<<MODE_SERVO)) list.Add("Servo");
+	if (pin_info[pin].supported_modes & (1<<MODE_INPUT)) list.Add(_("Input"));
+	if (pin_info[pin].supported_modes & (1<<MODE_OUTPUT)) list.Add(_("Output"));
+	if (pin_info[pin].supported_modes & (1<<MODE_ANALOG)) list.Add(_("Analog"));
+	if (pin_info[pin].supported_modes & (1<<MODE_PWM)) list.Add(_("PWM"));
+	if (pin_info[pin].supported_modes & (1<<MODE_SERVO)) list.Add(_("Servo"));
 	wxPoint pos = wxPoint(0, 0);
 	wxSize size = wxSize(-1, -1);
 	wxChoice *modes = new wxChoice(scroll, 8000+pin, pos, size, list);
-	if (pin_info[pin].mode == MODE_INPUT) modes->SetStringSelection("Input");
-	if (pin_info[pin].mode == MODE_OUTPUT) modes->SetStringSelection("Output");
-	if (pin_info[pin].mode == MODE_ANALOG) modes->SetStringSelection("Analog");
-	if (pin_info[pin].mode == MODE_PWM) modes->SetStringSelection("PWM");
-	if (pin_info[pin].mode == MODE_SERVO) modes->SetStringSelection("Servo");
+	if (pin_info[pin].mode == MODE_INPUT) modes->SetStringSelection(_("Input"));
+	if (pin_info[pin].mode == MODE_OUTPUT) modes->SetStringSelection(_("Output"));
+	if (pin_info[pin].mode == MODE_ANALOG) modes->SetStringSelection(_("Analog"));
+	if (pin_info[pin].mode == MODE_PWM) modes->SetStringSelection(_("PWM"));
+	if (pin_info[pin].mode == MODE_SERVO) modes->SetStringSelection(_("Servo"));
 	printf("create choice, mode = %d (%s)\n", pin_info[pin].mode,
 		(const char *)modes->GetStringSelection());
 	add_item_to_grid(pin, 1, modes);
@@ -203,11 +205,11 @@ void MyFrame::UpdateStatus(void)
 {
 	wxString status;
 	if (port.Is_open()) {
-		status.Printf(port.get_name() + "    " +
-			firmata_name + "    Tx:%u Rx:%u",
+		status.Printf(port.get_name() + _("    ") +
+			firmata_name + _("	Tx:%u Rx:%u"),
 			tx_count, rx_count);
 	} else {
-		status = "Please choose serial port";
+		status = _("Please choose serial port");
 	}
 	SetStatusText(status);
 }	
@@ -223,11 +225,11 @@ void MyFrame::OnModeChange(wxCommandEvent &event)
 	printf("Mode Change, id = %d, pin=%d, ", id, pin);
 	printf("Mode = %s\n", (const char *)sel);
 	int mode = 255;
-	if (sel.IsSameAs("Input")) mode = MODE_INPUT;
-	if (sel.IsSameAs("Output")) mode = MODE_OUTPUT;
-	if (sel.IsSameAs("Analog")) mode = MODE_ANALOG;
-	if (sel.IsSameAs("PWM")) mode = MODE_PWM;
-	if (sel.IsSameAs("Servo")) mode = MODE_SERVO;
+	if (sel.IsSameAs(_("Input"))) mode = MODE_INPUT;
+	if (sel.IsSameAs(_("Output"))) mode = MODE_OUTPUT;
+	if (sel.IsSameAs(_("Analog"))) mode = MODE_ANALOG;
+	if (sel.IsSameAs(_("PWM"))) mode = MODE_PWM;
+	if (sel.IsSameAs(_("Servo"))) mode = MODE_SERVO;
 	if (mode != pin_info[pin].mode) {
 		// send the mode change message
 		uint8_t buf[4];
@@ -242,12 +244,12 @@ void MyFrame::OnModeChange(wxCommandEvent &event)
 	// create the 3rd column control for this mode
 	if (mode == MODE_OUTPUT) {
 		wxToggleButton *button = new  wxToggleButton(scroll, 7000+pin, 
-			pin_info[pin].value ? "High" : "Low");
+			pin_info[pin].value ? S_HIGH : S_LOW);
 		button->SetValue(pin_info[pin].value);
 		add_item_to_grid(pin, 2, button);
 	} else if (mode == MODE_INPUT) {
 		wxStaticText *text = new wxStaticText(scroll, 5000+pin,
-			pin_info[pin].value ? "High" : "Low");
+			pin_info[pin].value ? S_HIGH : S_LOW);
 		wxSize size = wxSize(128, -1);
 		text->SetMinSize(size);
 		text->SetWindowStyle(wxALIGN_CENTRE);
@@ -255,7 +257,7 @@ void MyFrame::OnModeChange(wxCommandEvent &event)
 
 	} else if (mode == MODE_ANALOG) {
 		wxString val;
-		val.Printf("%d", pin_info[pin].value);
+		val.Printf(_("%d"), pin_info[pin].value);
 		wxStaticText *text = new wxStaticText(scroll, 5000+pin, val);
 		wxSize size = wxSize(128, -1);
 		text->SetMinSize(size);
@@ -280,7 +282,7 @@ void MyFrame::OnToggleButton(wxCommandEvent &event)
 	wxToggleButton *button = (wxToggleButton *)FindWindowById(id, scroll);
 	int val = button->GetValue() ? 1 : 0;
 	printf("Toggle Button, id = %d, pin=%d, val=%d\n", id, pin, val);
-	button->SetLabel(val ? "High" : "Low");
+	button->SetLabel(val ? S_HIGH : S_LOW);
 	pin_info[pin].value = val;
 	int port_num = pin / 8;
 	int port_val = 0;
@@ -350,7 +352,7 @@ void MyFrame::OnPort(wxCommandEvent &event)
 	port.Set_baud(57600);
 	if (port.Is_open()) {
 		printf("port is open\n");
-		firmata_name = "";
+		firmata_name = wxEmptyString;
 		rx_count = tx_count = 0;
 		parse_count = 0;
 		parse_command_len = 0;
@@ -471,7 +473,7 @@ void MyFrame::DoMessage(void)
 				  FindWindowById(5000 + pin, scroll);
 				if (text) {
 					wxString val;
-					val.Printf("A%d: %d", analog_ch, analog_val);
+					val.Printf(_("A%d: %d"), analog_ch, analog_val);
 					text->SetLabel(val);
 				}
 				return;
@@ -491,7 +493,7 @@ void MyFrame::DoMessage(void)
 					printf("pin %d is %d\n", pin, val);
 					wxStaticText *text = (wxStaticText *)
 					  FindWindowById(5000 + pin, scroll);
-					if (text) text->SetLabel(val ? "High" : "Low");
+					if (text) text->SetLabel(val ? S_HIGH : S_LOW);
 					pin_info[pin].value = val;
 				}
 			}
@@ -514,7 +516,7 @@ void MyFrame::DoMessage(void)
 			name[len++] = '.';
 			name[len++] = parse_buf[3] + '0';
 			name[len++] = 0;
-			firmata_name = name;
+			firmata_name = wxString::FromAscii(name);
 			// query the board's capabilities only after hearing the
 			// REPORT_FIRMWARE message.  For boards that reset when
 			// the port open (eg, Arduino with reset=DTR), they are
@@ -591,8 +593,8 @@ void MyFrame::DoMessage(void)
 
 void MyFrame::OnAbout( wxCommandEvent &event )
 {
-    wxMessageDialog dialog( this, wxT("Firmata Test 1.0\nCopyright Paul Stoffregen"),
-        wxT("About Firmata Test"), wxOK|wxICON_INFORMATION );
+    wxMessageDialog dialog( this, _("Firmata Test 1.0\nCopyright Paul Stoffregen"),
+        _("About Firmata Test"), wxOK|wxICON_INFORMATION );
     dialog.ShowModal();
 }
 
@@ -619,11 +621,10 @@ void MyFrame::OnSize( wxSizeEvent &event )
 MyMenu::MyMenu(const wxString& title, long style) : wxMenu(title, style)
 {
 }
-	
+
 void MyMenu::OnShowPortList(wxMenuEvent &event)
 {
 	wxMenu *menu;
-	wxMenuItem *item;
 	int num, any=0;
 
 	menu = event.GetMenu();
@@ -635,12 +636,12 @@ void MyMenu::OnShowPortList(wxMenuEvent &event)
 	for (int i = old_items.GetCount() - 1; i >= 0; i--) {
 		menu->Delete(old_items[i]);
 	}
-	menu->AppendRadioItem(9000, " (none)");
+	menu->AppendRadioItem(9000, _(" (none)"));
 	wxArrayString list = port.port_list();
 	num = list.GetCount();
 	for (int i=0; i < num; i++) {
 		//printf("%d: port %s\n", i, (const char *)list[i]);
-		item = menu->AppendRadioItem(9001 + i, list[i]);
+		menu->AppendRadioItem(9001 + i, list[i]);
 		if (port.Is_open() && port.get_name().IsSameAs(list[i])) {
 			menu->Check(9001 + i, true);
 			any = 1;
@@ -666,7 +667,7 @@ MyApp::MyApp()
 
 bool MyApp::OnInit()
 {
-    MyFrame *frame = new MyFrame( NULL, -1, "Firmata Test", wxPoint(20,20), wxSize(400,640) );
+    MyFrame *frame = new MyFrame( NULL, -1, _("Firmata Test"), wxPoint(20,20), wxSize(400,640) );
     frame->Show( true );
     
     return true;

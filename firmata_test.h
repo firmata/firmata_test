@@ -67,7 +67,7 @@ private:
 class MyMenu: public wxMenu
 {
 public:
-	MyMenu(const wxString& title = "", long style = 0);
+	MyMenu(const wxString& title = wxEmptyString, long style = 0);
 	void OnShowPortList(wxMenuEvent &event);
 	void OnHighlight(wxMenuEvent &event);
 };
