@@ -80,41 +80,41 @@ int Serial::Open(const wxString& name)
 #if defined(LINUX)
 	struct serial_struct kernel_serial_settings;
 	int bits;
-	port_fd = open(name.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+	port_fd = open(name.mb_str(wxConvUTF8), O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (port_fd < 0) {
 		if (errno == EACCES) {
-			error_msg = "Unable to access " + name + ", insufficient permission";
+			error_msg = wxT("Unable to access ") + name + wxT(", insufficient permission");
 			// TODO: we could look at the permission bits and owner
 			// to make a better message here
 		} else if (errno == EISDIR) {
-			error_msg = "Unable to open " + name +
-				", Object is a directory, not a serial port";
+			error_msg = wxT("Unable to open ") + name +
+				wxT(", Object is a directory, not a serial port");
 		} else if (errno == ENODEV || errno == ENXIO) {
-			error_msg = "Unable to open " + name +
-				", Serial port hardware not installed";
+			error_msg = wxT("Unable to open ") + name +
+				wxT(", Serial port hardware not installed");
 		} else if (errno == ENOENT) {
-			error_msg = "Unable to open " + name +
-				", Device name does not exist";
+			error_msg = wxT("Unable to open ") + name +
+				wxT(", Device name does not exist");
 		} else {
-			error_msg = "Unable to open " + name +
-				", " + strerror(errno);
+			error_msg = wxT("Unable to open ") + name +
+				wxT(", ") + wxString::FromAscii(strerror(errno));
 		}
 		return -1;
 	}
 	if (ioctl(port_fd, TIOCMGET, &bits) < 0) {
 		close(port_fd);
-		error_msg = "Unable to query serial port signals";
+		error_msg = wxT("Unable to query serial port signals");
 		return -1;
 	}
 	bits &= ~(TIOCM_DTR | TIOCM_RTS);
 	if (ioctl(port_fd, TIOCMSET, &bits) < 0) {
 		close(port_fd);
-		error_msg = "Unable to control serial port signals";
+		error_msg = wxT("Unable to control serial port signals");
 		return -1;
 	}
 	if (tcgetattr(port_fd, &settings_orig) != 0) {
 		close(port_fd);
-		error_msg = "Unable to query serial port settings (perhaps not a serial port)";
+		error_msg = wxT("Unable to query serial port settings (perhaps not a serial port)");
 		return -1;
 	}
 	memset(&settings, 0, sizeof(settings));
@@ -257,7 +257,7 @@ int Serial::Open(const wxString& name)
 
 wxString Serial::get_name(void)
 {
-	if (!port_is_open) return "";
+	if (!port_is_open) return wxString();
 	return port_name;
 }
 
@@ -281,7 +281,7 @@ void Serial::Close(void)
 	Output_flush();
 	Input_discard();
 	port_is_open = 0;
-	port_name = "";
+	port_name = wxEmptyString;
 #if defined(LINUX) || defined(MACOSX)
 	tcsetattr(port_fd, TCSANOW, &settings_orig);
 	close(port_fd);
@@ -778,7 +778,7 @@ wxArrayString Serial::port_list()
 			// (otherwise the port will be invisible to the user
 			// and we won't have a to alert them to the permssion
 			// problem)
-			if (errno == EACCES) list.Add(s);
+			if (errno == EACCES) list.Add(wxString::FromAscii(s));
 			// any other error, assume it's not a real device
 			continue;
 		}
@@ -804,7 +804,7 @@ wxArrayString Serial::port_list()
 		// not nice!  Every serial port is going to get DTR raised
 		// and then lowered.  I wish there were a way to prevent this,
 		// but it seems impossible.
-		list.Add(s);
+		list.Add(wxString::FromAscii(s));
 	}
 	closedir(dir);
 #elif defined(MACOSX)
