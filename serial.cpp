@@ -83,38 +83,38 @@ int Serial::Open(const wxString& name)
 	port_fd = open(name.mb_str(wxConvUTF8), O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if (port_fd < 0) {
 		if (errno == EACCES) {
-			error_msg = wxT("Unable to access ") + name + wxT(", insufficient permission");
+			error_msg = _("Unable to access ") + name + wxT(", insufficient permission");
 			// TODO: we could look at the permission bits and owner
 			// to make a better message here
 		} else if (errno == EISDIR) {
-			error_msg = wxT("Unable to open ") + name +
-				wxT(", Object is a directory, not a serial port");
+			error_msg = _("Unable to open ") + name +
+				_(", Object is a directory, not a serial port");
 		} else if (errno == ENODEV || errno == ENXIO) {
-			error_msg = wxT("Unable to open ") + name +
-				wxT(", Serial port hardware not installed");
+			error_msg = _("Unable to open ") + name +
+				_(", Serial port hardware not installed");
 		} else if (errno == ENOENT) {
-			error_msg = wxT("Unable to open ") + name +
-				wxT(", Device name does not exist");
+			error_msg = _("Unable to open ") + name +
+				_(", Device name does not exist");
 		} else {
-			error_msg = wxT("Unable to open ") + name +
-				wxT(", ") + wxString::FromAscii(strerror(errno));
+			error_msg = _("Unable to open ") + name +
+				_(", ") + wxString::FromAscii(strerror(errno));
 		}
 		return -1;
 	}
 	if (ioctl(port_fd, TIOCMGET, &bits) < 0) {
 		close(port_fd);
-		error_msg = wxT("Unable to query serial port signals");
+		error_msg = _("Unable to query serial port signals");
 		return -1;
 	}
 	bits &= ~(TIOCM_DTR | TIOCM_RTS);
 	if (ioctl(port_fd, TIOCMSET, &bits) < 0) {
 		close(port_fd);
-		error_msg = wxT("Unable to control serial port signals");
+		error_msg = _("Unable to control serial port signals");
 		return -1;
 	}
 	if (tcgetattr(port_fd, &settings_orig) != 0) {
 		close(port_fd);
-		error_msg = wxT("Unable to query serial port settings (perhaps not a serial port)");
+		error_msg = _("Unable to query serial port settings (perhaps not a serial port)");
 		return -1;
 	}
 	memset(&settings, 0, sizeof(settings));
