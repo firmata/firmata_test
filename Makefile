@@ -30,8 +30,9 @@ TARGET ?= $(PROG)
 FINAL_TARGET ?= $(TARGET)
 CXX ?= $(CROSS)g++
 STRIP ?= $(CROSS)strip
+OPT ?= -O2
 LIBS = $(PLATFORM_LIBS) `$(WXCONFIG) --libs`
-CPPFLAGS = $(PLATFORM_CPPFLAGS) -O2 -Wall -Wno-strict-aliasing `$(WXCONFIG) --cppflags` -D$(OS)
+CPPFLAGS = $(PLATFORM_CPPFLAGS) $(OPT) -Wall -Wno-strict-aliasing `$(WXCONFIG) --cppflags` -D$(OS)
 
 MAKEFLAGS = --jobs=4
 
