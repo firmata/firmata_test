@@ -48,6 +48,12 @@ wxMenu *port_menu;
 #define MODE_SERVO    0x04
 #define MODE_SHIFT    0x05
 #define MODE_I2C      0x06
+#define MODE_ONEWIRE  0x07
+#define MODE_STEPPER  0x08
+#define MODE_ENCODER  0x09
+#define MODE_SERIAL   0x0A
+#define MODE_PULLUP   0x0B
+#define MODE_IGNORE   0x7F
 
 #define START_SYSEX             0xF0 // start a MIDI Sysex message
 #define END_SYSEX               0xF7 // end a MIDI Sysex message
@@ -178,6 +184,7 @@ void MyFrame::add_pin(int pin)
 
 	wxArrayString list;
 	if (pin_info[pin].supported_modes & (1<<MODE_INPUT)) list.Add("Input");
+	if (pin_info[pin].supported_modes & (1<<MODE_PULLUP)) list.Add("Pullup");
 	if (pin_info[pin].supported_modes & (1<<MODE_OUTPUT)) list.Add("Output");
 	if (pin_info[pin].supported_modes & (1<<MODE_ANALOG)) list.Add("Analog");
 	if (pin_info[pin].supported_modes & (1<<MODE_PWM)) list.Add("PWM");
@@ -186,6 +193,7 @@ void MyFrame::add_pin(int pin)
 	wxSize size = wxSize(-1, -1);
 	wxChoice *modes = new wxChoice(scroll, 8000+pin, pos, size, list);
 	if (pin_info[pin].mode == MODE_INPUT) modes->SetStringSelection("Input");
+	if (pin_info[pin].mode == MODE_PULLUP) modes->SetStringSelection("Pullup");
 	if (pin_info[pin].mode == MODE_OUTPUT) modes->SetStringSelection("Output");
 	if (pin_info[pin].mode == MODE_ANALOG) modes->SetStringSelection("Analog");
 	if (pin_info[pin].mode == MODE_PWM) modes->SetStringSelection("PWM");
@@ -224,6 +232,7 @@ void MyFrame::OnModeChange(wxCommandEvent &event)
 	printf("Mode = %s\n", (const char *)sel);
 	int mode = 255;
 	if (sel.IsSameAs("Input")) mode = MODE_INPUT;
+	if (sel.IsSameAs("Pullup")) mode = MODE_PULLUP;
 	if (sel.IsSameAs("Output")) mode = MODE_OUTPUT;
 	if (sel.IsSameAs("Analog")) mode = MODE_ANALOG;
 	if (sel.IsSameAs("PWM")) mode = MODE_PWM;
@@ -245,7 +254,7 @@ void MyFrame::OnModeChange(wxCommandEvent &event)
 			pin_info[pin].value ? "High" : "Low");
 		button->SetValue(pin_info[pin].value);
 		add_item_to_grid(pin, 2, button);
-	} else if (mode == MODE_INPUT) {
+	} else if (mode == MODE_INPUT || mode == MODE_PULLUP) {
 		wxStaticText *text = new wxStaticText(scroll, 5000+pin,
 			pin_info[pin].value ? "High" : "Low");
 		wxSize size = wxSize(128, -1);
@@ -286,7 +295,7 @@ void MyFrame::OnToggleButton(wxCommandEvent &event)
 	int port_val = 0;
 	for (int i=0; i<8; i++) {
 		int p = port_num * 8 + i;
-		if (pin_info[p].mode == MODE_OUTPUT || pin_info[p].mode == MODE_INPUT) {
+		if (pin_info[p].mode == MODE_OUTPUT || pin_info[p].mode == MODE_INPUT || pin_info[p].mode == MODE_PULLUP) {
 			if (pin_info[p].value) {
 				port_val |= (1<<i);
 			}
@@ -485,7 +494,7 @@ void MyFrame::DoMessage(void)
 		int pin = port_num * 8;
 		//printf("port_num = %d, port_val = %d\n", port_num, port_val);
 		for (int mask=1; mask & 0xFF; mask <<= 1, pin++) {
-			if (pin_info[pin].mode == MODE_INPUT) {
+			if (pin_info[pin].mode == MODE_INPUT || pin_info[pin].mode == MODE_PULLUP) {
 				uint32_t val = (port_val & mask) ? 1 : 0;
 				if (pin_info[pin].value != val) {
 					printf("pin %d is %d\n", pin, val);
