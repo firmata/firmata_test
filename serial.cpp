@@ -211,7 +211,7 @@ int Serial::Open(const wxString& name)
 	port_cfg.dcb.fParity = FALSE;
 	port_cfg.dcb.fOutxCtsFlow = FALSE;
 	port_cfg.dcb.fOutxDsrFlow = FALSE;
-	port_cfg.dcb.fDtrControl = DTR_CONTROL_DISABLE;
+	port_cfg.dcb.fDtrControl = DTR_CONTROL_ENABLE;
 	port_cfg.dcb.fDsrSensitivity = FALSE;
 	port_cfg.dcb.fTXContinueOnXoff = TRUE;	// ???
 	port_cfg.dcb.fOutX = FALSE;
